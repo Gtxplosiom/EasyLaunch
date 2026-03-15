@@ -1,0 +1,30 @@
+{
+  "name": "easylaunch",
+  "version": "1.0.0",
+  "description": "A simple and no-clutter launcher application",
+  "license": "ISC",
+  "author": "Gtxplosiom",
+  "type": "commonjs",
+  "main": "main.js",
+  "scripts": {
+    "start": "nodemon --ext js,css,html --exec electron .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "build": {
+    "appId": "com.gtx.easylaunch",
+    "productName": "EasyLaunch",
+    "files": [
+      "**/*"
+    ],
+    "directories": {
+      "output": "dist"
+    }
+  },
+  "devDependencies": {
+    "electron": "^41.0.2",
+    "nodemon": "^3.1.14"
+  },
+  "dependencies": {
+    "sqlite3": "^6.0.1"
+  }
+}

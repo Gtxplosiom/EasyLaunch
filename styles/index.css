@@ -1,0 +1,29 @@
+body {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    width: 100vw;
+    height: 100vh;
+}
+
+.title-area {
+    display: flex;
+    justify-content: center;
+    height: 20%;
+}
+
+.add-btn-area {
+    display: flex;
+    justify-content: center;
+    height: 20%;
+}
+
+.content-area {
+    display: flex;
+    height: 60%;
+}
+
+#add-modal-btn {
+    width: 200px;
+    height: 50px;
+}

@@ -13,16 +13,18 @@
                 <input type="text" id="item-name" />
             </div>
             <div class="modal-input">
-                <span>Select Item:</span>
-                <button type="button" class="item-path-btn" id="item-path-btn"></button>
-                <label id="item-path-label">...</label>
-            </div>
-            <div class="modal-input">
                 <span>Item Type:</span>
                 <select name="item-type" id="item-type">
                     <option value="executable">Executable</option>
+                    <option value="rom">ROM</option>
+                    <option value="custom-script">Custom Script</option>
                     <option value="others">Others</option>
                 </select>
+            </div>
+            <div class="modal-input" id="item-path-div">
+                <span>Select Item:</span>
+                <button type="button" class="item-path-btn" id="item-path-btn"></button>
+                <label id="item-path-label">...</label>
             </div>
             <div class="modal-input">
                 <span>Conditions:</span>

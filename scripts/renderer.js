@@ -84,14 +84,29 @@ const container = document.getElementById('modal-inputs')
 const currType = document.getElementById('item-type')
 const currConditions = document.getElementById('conditions')
 
+// Conditions
 const typeExe = [
     { value: 'normal', text: 'Run normally' },
     { value: 'admin', text: 'Run as administrator' }
 ]
 
 const typeOthers = [
-    { value: 'application', text: 'Open with an application' },
-    { value: 'script', text: 'Custom script' }
+    { value: 'application', text: 'Open with an application' }
+]
+
+const scriptTypes = [
+    { value: 'bat', text: 'Windows Batch Script (.bat)' },
+    { value: 'ps1', text: 'PowerShell Script (.ps1)' },
+    { value: 'cmd', text: 'Windows Command Script (.cmd)' },
+    { value: 'py', text: 'Python Script (.py)' },
+    { value: 'sh', text: 'Shell Script (.sh)' },
+    { value: 'node', text: 'Node.js Script (.js)' },
+    { value: 'custom', text: 'Custom Command' }
+]
+
+const romTypes = [
+    { value: 'ps2', text: 'PlayStation 2' },
+    { value: 'psp', text: 'PlayStation Portable' }
 ]
 
 function populateConditions(options) {
@@ -105,16 +120,18 @@ function populateConditions(options) {
     })
 }
 
-function addNewInput(condition) {
+function addNewInput(value) {
 
     const existing = document.getElementById('new-input')
     if (existing) existing.remove()
 
-    const newRow = document.createElement('div')
-    newRow.classList.add('modal-input')
-    newRow.id = 'new-input'
+    let newRow
 
-    if (condition === 'application') {
+    if (value === 'application') {
+        newRow = document.createElement('div')
+        newRow.classList.add('modal-input')
+        newRow.id = 'new-input'
+
         const appPathDiv = document.createElement('div')
         appPathDiv.id = "app-path-container"
 
@@ -143,26 +160,26 @@ function addNewInput(condition) {
                 }
             })
         }
+    } else if (value === 'custom-script') {
+        newRow = document.createElement('div')
+        newRow.classList.add('modal-input')
+        newRow.id = 'new-input'
 
-    } else if (condition === 'script') {
-        const textInput = document.createElement('input')
-        textInput.type = 'text'
-        textInput.id = 'launch-script'
-        textInput.placeholder = "Input custom script here..."
+        const textArea = document.createElement('textarea')
+        textArea.id = 'script-text'
 
-        newRow.appendChild(textInput)
+        newRow.appendChild(textArea)
     }
 
-    container.appendChild(newRow)
+    if (newRow) container.appendChild(newRow)
 }
 
 if (currConditions) {
-
     currConditions.addEventListener('change', () => {
 
         const value = currConditions.value
 
-        if (value === 'application' || value === 'script') {
+        if (value === 'application') {
             addNewInput(value)
         } else {
             const existing = document.getElementById('new-input')
@@ -178,13 +195,19 @@ if (currType) {
         const existing = document.getElementById('new-input')
         if (existing) existing.remove()
 
+        document.getElementById('item-path-div').style.display = "block"
+
         if (currType.value === 'executable') {
             populateConditions(typeExe)
+        } else if (currType.value === 'custom-script') {
+            document.getElementById('item-path-div').style.display = "none"
+            addNewInput(currType.value)
+            populateConditions(scriptTypes)
+        } else if (currType.value === 'rom') {
+            populateConditions(romTypes)
         } else {
             populateConditions(typeOthers)
         }
-
-        currConditions.dispatchEvent(new Event('change'))
     })
 
     populateConditions(typeExe)

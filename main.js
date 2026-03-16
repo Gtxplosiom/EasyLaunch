@@ -1,4 +1,4 @@
-const { app, dialog, BrowserWindow, ipcMain, Tray, Menu } = require('electron')
+const { app, dialog, shell, BrowserWindow, ipcMain, Tray, Menu } = require('electron')
 const path = require("node:path")
 const sqlite3 = require('sqlite3').verbose();
 const dbPath = path.join(__dirname, 'local.sqlite')
@@ -15,9 +15,9 @@ app.whenReady().then(() => {
         db.run(`
             CREATE TABLE IF NOT EXISTS items (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                item_name TEXT NOT NULL,
-                path TEXT NOT NULL,
+                item_name TEXT NULL,
                 type TEXT DEFAULT 'executable',
+                path TEXT NULL,
                 condition TEXT DEFAULT 'default',
                 open_with_path TEXT NULL,
                 launch_script TEXT NULL,
@@ -40,13 +40,20 @@ app.whenReady().then(() => {
                 return
             }
 
-            // TODO: add click function
             let items = rows.map(row => ({
-                label: row.item_name
+                id: row.id.toString(),
+                label: row.item_name,
+                click: () => {
+                    launchItem(row.path)
+                }
             }))
 
             itemList = Menu.buildFromTemplate(items)
         })
+    }
+
+    function launchItem(itemPath) {
+        shell.openPath(itemPath)
     }
 
     const window = new BrowserWindow({
@@ -58,8 +65,8 @@ app.whenReady().then(() => {
 
         width: 640,
         height: 480,
-        minWidth: 640,
-        minHeight: 480,
+
+        resizable: false,
 
         show: false
     })

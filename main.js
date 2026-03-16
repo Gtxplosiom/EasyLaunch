@@ -9,21 +9,45 @@ app.whenReady().then(() => {
         console.log('Connected to local database')
     })
 
-    db.run(`
-        CREATE TABLE IF NOT EXISTS items (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            path TEXT NOT NULL,
-            type TEXT DEFAULT 'executable',
-            condition TEXT DEFAULT 'default',
-            open_with_path TEXT NULL,
-            launch_script TEXT NULL,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )
+    let itemList
+
+    db.serialize(() => {
+
+        db.run(`
+            CREATE TABLE IF NOT EXISTS items (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                item_name TEXT NOT NULL,
+                path TEXT NOT NULL,
+                type TEXT DEFAULT 'executable',
+                condition TEXT DEFAULT 'default',
+                open_with_path TEXT NULL,
+                launch_script TEXT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
         `, (err) => {
-        if (err) return console.error('Table creation error:', err.message)
-        console.log('Users table ready.')
-    });
+            if (err) return console.error(err.message)
+            console.log("Items table ready")
+        })
+
+        loadItemList()
+    })
+
+    function loadItemList() {
+        db.all("SELECT * FROM items", [], (err, rows) => {
+
+            if (err) {
+                console.error(err.message)
+                return
+            }
+
+            // TODO: add click function
+            let items = rows.map(row => ({
+                label: row.item_name
+            }))
+
+            itemList = Menu.buildFromTemplate(items)
+        })
+    }
 
     const window = new BrowserWindow({
         webPreferences: {
@@ -38,6 +62,8 @@ app.whenReady().then(() => {
 
         show: false
     })
+
+    window.setMenuBarVisibility(false)
 
     let addWindow, editWindow
 
@@ -62,21 +88,13 @@ app.whenReady().then(() => {
         }
     ])
 
-    const appMenu = Menu.buildFromTemplate([
-        {label: "App 1"},
-        {label: "App 2"},
-        {label: "App 3"}
-    ])
-
     tray.on("click", () => {
-        tray.popUpContextMenu(appMenu)
+        tray.popUpContextMenu(itemList)
     })
 
     tray.on("right-click", () => {
         tray.popUpContextMenu(contextMenu)
     })
-
-    window.setMenuBarVisibility(false)
     
     window.loadFile("index.html")
 
@@ -104,6 +122,21 @@ app.whenReady().then(() => {
         }
     })
 
+    ipcMain.on("add-item", (event, data) => {
+
+        db.run(
+            "INSERT INTO items (item_name, path, type, condition, open_with_path, launch_script) VALUES (?, ?, ?, ?, ?, ?)",
+            [data.itemName, data.itemPath, data.itemType, data.condition, data.openWithPath, data.launchScript],
+            function(err) {
+                if (err) {
+                    return console.error(err.message)
+                }
+
+                console.log("inserted row")
+            }
+        )
+    })
+
     ipcMain.on("close-modals", () => {
         if (addWindow && addWindow.isVisible()) {
             addWindow.close()
@@ -112,5 +145,19 @@ app.whenReady().then(() => {
         if (editWindow && editWindow.isVisible()) {
             editWindow.close()
         }
+    })
+
+    ipcMain.on("refresh", () => {
+        loadItemList()
+        window.reload()
+    })
+
+    ipcMain.handle("get-items", async () => {
+        return new Promise((resolve, reject) => {
+            db.all("SELECT * FROM items", [], (err, rows) => {
+                if (err) reject(err)
+                else resolve(rows)
+            })
+        })
     })
 })

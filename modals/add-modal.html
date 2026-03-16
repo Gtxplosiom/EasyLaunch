@@ -6,30 +6,36 @@
     <title>Add</title>
 </head>
 <body>
-    <div class="modal-inputs" id="modal-inputs">
-        <div class="modal-input">
-            <span>Select Item:</span>
-            <input type="file" id="item-path" />
+    <form id="item-form">
+        <div class="modal-inputs" id="modal-inputs">
+            <div class="modal-input">
+                <span>Item Name:</span>
+                <input type="text" id="item-name" />
+            </div>
+            <div class="modal-input">
+                <span>Select Item:</span>
+                <input type="file" id="item-path" />
+            </div>
+            <div class="modal-input">
+                <span>Item Type:</span>
+                <select name="item-type" id="item-type">
+                    <option value="executable">Executable</option>
+                    <option value="others">Others</option>
+                </select>
+            </div>
+            <div class="modal-input">
+                <span>Conditions:</span>
+                <select name="conditions" id="conditions">
+                    <option value="normal">Run Normally</option>
+                    <option value="admin">Run as Administrator</option>
+                </select>
+            </div>
         </div>
-        <div class="modal-input">
-            <span>Item Type:</span>
-            <select name="item-type" id="item-type">
-                <option value="executable">Executable</option>
-                <option value="others">Others</option>
-            </select>
+        <div class="modal-buttons">
+            <button id="add-item-btn" type="submit">Add</button>
+            <button id="close-modal-btn" type="button">Cancel</button>
         </div>
-        <div class="modal-input">
-            <span>Conditions:</span>
-            <select name="conditions" id="conditions">
-                <option value="normal">Run Normally</option>
-                <option value="admin">Run as Administrator</option>
-            </select>
-        </div>
-    </div>
-    <div class="modal-buttons">
-        <button id="add-btn">Add</button>
-        <button id="close-modal-btn">Cancel</button>
-    </div>
+    </form>
     <script src="../scripts/renderer.js"></script>
 </body>
 </html>

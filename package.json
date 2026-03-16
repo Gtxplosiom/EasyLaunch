@@ -2,7 +2,7 @@
   "name": "easylaunch",
   "version": "1.0.0",
   "description": "A simple and no-clutter launcher application",
-  "license": "ISC",
+  "license": "MIT",
   "author": "Gtxplosiom",
   "type": "commonjs",
   "main": "main.js",

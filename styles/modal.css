@@ -3,7 +3,7 @@ body {
     flex-direction: column;
 }
 
-#item-path-btn {
+.item-path-btn {
     width: 30px;
     height: 15px;
 }

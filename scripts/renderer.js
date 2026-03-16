@@ -14,6 +14,7 @@ if (closeBtn) {
     })
 }
 
+// item path picker
 const itemPathBtn = document.getElementById("item-path-btn")
 const itemPathLabel = document.getElementById("item-path-label")
 if (itemPathBtn) {
@@ -53,19 +54,6 @@ if (itemForm) {
         window.electronAPI.send("refresh")
         loadItemList()
     })
-}
-
-async function itemPathPicker() {
-    const result = await dialog.showOpenDialog({
-        properties: ['openFile']
-    })
-
-    if (!result.canceled) {
-        const filePath = result.filePaths[0]
-        return filePath
-    }
-
-    return null
 }
 
 // populate index.html with items
@@ -126,14 +114,36 @@ function addNewInput(condition) {
     newRow.classList.add('modal-input')
     newRow.id = 'new-input'
 
-    // make this button and label
-    // integrate file handler for real "path-tracing"
     if (condition === 'application') {
-        const fileInput = document.createElement('input')
-        fileInput.type = 'file'
-        fileInput.id = 'open-with-path'
+        const appPathDiv = document.createElement('div')
+        appPathDiv.id = "app-path-container"
 
-        newRow.appendChild(fileInput)
+        const appPathBtn = document.createElement('button')
+        appPathBtn.classList.add('item-path-btn')
+        appPathBtn.type = 'button'
+        appPathBtn.id = 'app-path-btn'
+
+        const appPathLabel = document.createElement('label')
+        appPathLabel.id = 'app-path-label'
+        appPathLabel.textContent = '...'
+
+        appPathDiv.appendChild(appPathBtn)
+        appPathDiv.appendChild(appPathLabel)
+
+        newRow.appendChild(appPathDiv)
+
+        // app path picker
+        if (appPathBtn) {
+            appPathBtn.addEventListener("click", async () => {
+                const pathResult = await window.electronAPI.openFile()
+                if (pathResult) {
+                    appPathLabel.textContent = pathResult
+                } else {
+                    appPathLabel.textContent = '...'
+                }
+            })
+        }
+
     } else if (condition === 'script') {
         const textInput = document.createElement('input')
         textInput.type = 'text'

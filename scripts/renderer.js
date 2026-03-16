@@ -1,19 +1,30 @@
-const { ipcRenderer } = require('electron')
-
 // opening add item modal
 const addBtn = document.getElementById("add-modal-btn")
 if (addBtn) {
-  addBtn.addEventListener("click", () => {
-    ipcRenderer.send("open-add-modal")
-  })
+    addBtn.addEventListener("click", () => {
+        window.electronAPI.send("open-add-modal")
+    })
 }
 
 // closing modals
 const closeBtn = document.getElementById("close-modal-btn")
 if (closeBtn) {
-  closeBtn.addEventListener("click", () => {
-    ipcRenderer.send("close-modals")
-  })
+    closeBtn.addEventListener("click", () => {
+        window.electronAPI.send("close-modals")
+    })
+}
+
+const itemPathBtn = document.getElementById("item-path-btn")
+const itemPathLabel = document.getElementById("item-path-label")
+if (itemPathBtn) {
+    itemPathBtn.addEventListener("click", async () => {
+        const pathResult = await window.electronAPI.openFile()
+        if (pathResult) {
+            itemPathLabel.textContent = pathResult
+        } else {
+            itemPathLabel.textContent = '...'
+        }
+    })
 }
 
 // adding items
@@ -23,7 +34,7 @@ if (itemForm) {
         e.preventDefault()
 
         const itemName = document.getElementById("item-name").value
-        const itemPath = document.getElementById("item-path").value
+        const itemPath = document.getElementById("item-path-label").textContent
         const itemType = document.getElementById("item-type").value
         const condition = document.getElementById("conditions").value
 
@@ -37,16 +48,29 @@ if (itemForm) {
             launchScript = document.getElementById("launch-script").value
         }
 
-        ipcRenderer.send("add-item", {itemName, itemPath, itemType, condition, openWithPath, launchScript})
-        ipcRenderer.send("close-modals")
-        ipcRenderer.send("refresh")
+        window.electronAPI.send("add-item", {itemName, itemPath, itemType, condition, openWithPath, launchScript})
+        window.electronAPI.send("close-modals")
+        window.electronAPI.send("refresh")
         loadItemList()
     })
 }
 
+async function itemPathPicker() {
+    const result = await dialog.showOpenDialog({
+        properties: ['openFile']
+    })
+
+    if (!result.canceled) {
+        const filePath = result.filePaths[0]
+        return filePath
+    }
+
+    return null
+}
+
 // populate index.html with items
 function loadItemList() {
-    ipcRenderer.invoke("get-items").then(rows => {
+    window.electronAPI.invoke("get-items").then(rows => {
 
         const container = document.getElementById("item-list-area")
         container.innerHTML = ""
@@ -102,6 +126,8 @@ function addNewInput(condition) {
     newRow.classList.add('modal-input')
     newRow.id = 'new-input'
 
+    // make this button and label
+    // integrate file handler for real "path-tracing"
     if (condition === 'application') {
         const fileInput = document.createElement('input')
         fileInput.type = 'file'

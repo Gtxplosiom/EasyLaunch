@@ -1,4 +1,4 @@
-const {app, BrowserWindow, ipcMain, Tray, Menu} = require('electron')
+const { app, dialog, BrowserWindow, ipcMain, Tray, Menu } = require('electron')
 const path = require("node:path")
 const sqlite3 = require('sqlite3').verbose();
 const dbPath = path.join(__dirname, 'local.sqlite')
@@ -12,7 +12,6 @@ app.whenReady().then(() => {
     let itemList
 
     db.serialize(() => {
-
         db.run(`
             CREATE TABLE IF NOT EXISTS items (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -32,6 +31,7 @@ app.whenReady().then(() => {
         loadItemList()
     })
 
+    // for tray
     function loadItemList() {
         db.all("SELECT * FROM items", [], (err, rows) => {
 
@@ -51,8 +51,9 @@ app.whenReady().then(() => {
 
     const window = new BrowserWindow({
         webPreferences: {
-            contextIsolation: false,
-            nodeIntegration: true
+            preload: path.join(__dirname, "preload.js"),
+            contextIsolation: true,
+            nodeIntegration: false
         },
 
         width: 640,
@@ -109,8 +110,9 @@ app.whenReady().then(() => {
                 modal: true,
                 parent: BrowserWindow.getFocusedWindow(),
                 webPreferences: {
-                    nodeIntegration: true,
-                    contextIsolation: false
+                    preload: path.join(__dirname, "preload.js"),
+                    contextIsolation: true,
+                    nodeIntegration: false
                 }
             });
 
@@ -159,5 +161,12 @@ app.whenReady().then(() => {
                 else resolve(rows)
             })
         })
+    })
+    
+    ipcMain.handle('dialog:openFile', async () => {
+        const win = BrowserWindow.getFocusedWindow()
+        const result = await dialog.showOpenDialog(win, { properties: ['openFile'] })
+        if (!result.canceled) return result.filePaths[0]
+        return null
     })
 })

@@ -27,3 +27,7 @@ body {
     width: 200px;
     height: 50px;
 }
+
+.item {
+    background-color: aliceblue;
+}

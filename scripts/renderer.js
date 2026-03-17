@@ -1,5 +1,12 @@
-// opening add item modal
+const container = document.getElementById('modal-inputs')
+const currType = document.getElementById('item-type')
+const currConditions = document.getElementById('conditions')
+const closeBtn = document.getElementById("close-modal-btn")
+const itemPathBtn = document.getElementById("item-path-btn")
+const itemPathLabel = document.getElementById("item-path-label")
 const addBtn = document.getElementById("add-modal-btn")
+
+// opening add item modal
 if (addBtn) {
     addBtn.addEventListener("click", () => {
         window.electronAPI.send("open-add-modal")
@@ -7,7 +14,6 @@ if (addBtn) {
 }
 
 // closing modals
-const closeBtn = document.getElementById("close-modal-btn")
 if (closeBtn) {
     closeBtn.addEventListener("click", () => {
         window.electronAPI.send("close-modals")
@@ -15,20 +21,11 @@ if (closeBtn) {
 }
 
 // item path picker
-const itemPathBtn = document.getElementById("item-path-btn")
-const itemPathLabel = document.getElementById("item-path-label")
 if (itemPathBtn) {
-    itemPathBtn.addEventListener("click", async () => {
-        const pathResult = await window.electronAPI.openFile()
-        if (pathResult) {
-            itemPathLabel.textContent = pathResult
-        } else {
-            itemPathLabel.textContent = '...'
-        }
-    })
+    setupFilePicker(itemPathBtn, itemPathLabel)
 }
 
-// adding items
+// adding items to db
 const itemForm = document.getElementById("item-form")
 if (itemForm) {
     itemForm.addEventListener("submit", (e) => {
@@ -39,14 +36,15 @@ if (itemForm) {
         const itemType = document.getElementById("item-type").value
         const condition = document.getElementById("conditions").value
 
+
         let openWithPath, launchScript = ''
         
-        if (document.getElementById("open-with-path")) {
-            openWithPath = document.getElementById("open-with-path").value
+        if (document.getElementById("open-with-path-label")) {
+            openWithPath = document.getElementById("open-with-path-label").textContent
         }
 
         if (document.getElementById("launch-script")) {
-            launchScript = document.getElementById("launch-script").value
+            launchScript = document.getElementById("script-text").textContent
         }
 
         window.electronAPI.send("add-item", {itemName, itemPath, itemType, condition, openWithPath, launchScript})
@@ -80,10 +78,6 @@ function loadItemList() {
 }
 loadItemList()
 
-const container = document.getElementById('modal-inputs')
-const currType = document.getElementById('item-type')
-const currConditions = document.getElementById('conditions')
-
 // Conditions
 const typeExe = [
     { value: 'normal', text: 'Run normally' },
@@ -104,6 +98,7 @@ const scriptTypes = [
     { value: 'custom', text: 'Custom Command' }
 ]
 
+// TODO: add more
 const romTypes = [
     { value: 'ps2', text: 'PlayStation 2' },
     { value: 'psp', text: 'PlayStation Portable' }
@@ -120,93 +115,136 @@ function populateConditions(options) {
     })
 }
 
-function addNewInput(value) {
+// function to setup file picker with a button and label
+function setupFilePicker(btn, label) {
+    if (btn) {
+        btn.addEventListener("click", async () => {
+            const pathResult = await window.electronAPI.openFile()
+            if (pathResult) {
+                label.textContent = pathResult
+            } else {
+                label.textContent = '...'
+            }
+        })
+    }
+}
 
+// input "fabricator"s
+// for when type change
+// TODO: clean this ahh
+function addNewInput(value) {
     const existing = document.getElementById('new-input')
     if (existing) existing.remove()
 
-    let newRow
+    const newInputDiv = setupNewInputDiv()
 
-    if (value === 'application') {
-        newRow = document.createElement('div')
-        newRow.classList.add('modal-input')
-        newRow.id = 'new-input'
+    switch (value) {
+        // TODO: clean this ahh
+        case 'rom':
+            addFilePicker('Emulator Path:', newInputDiv)
+            break
 
-        const appPathDiv = document.createElement('div')
-        appPathDiv.id = "app-path-container"
+        case 'custom-script':
+            const textArea = document.createElement('textarea')
+            textArea.id = 'launch-script'
 
-        const appPathBtn = document.createElement('button')
-        appPathBtn.classList.add('item-path-btn')
-        appPathBtn.type = 'button'
-        appPathBtn.id = 'app-path-btn'
+            newRow.appendChild(textArea)
+            break
 
-        const appPathLabel = document.createElement('label')
-        appPathLabel.id = 'app-path-label'
-        appPathLabel.textContent = '...'
-
-        appPathDiv.appendChild(appPathBtn)
-        appPathDiv.appendChild(appPathLabel)
-
-        newRow.appendChild(appPathDiv)
-
-        // app path picker
-        if (appPathBtn) {
-            appPathBtn.addEventListener("click", async () => {
-                const pathResult = await window.electronAPI.openFile()
-                if (pathResult) {
-                    appPathLabel.textContent = pathResult
-                } else {
-                    appPathLabel.textContent = '...'
-                }
-            })
-        }
-    } else if (value === 'custom-script') {
-        newRow = document.createElement('div')
-        newRow.classList.add('modal-input')
-        newRow.id = 'new-input'
-
-        const textArea = document.createElement('textarea')
-        textArea.id = 'script-text'
-
-        newRow.appendChild(textArea)
+        case 'others':
+            addFilePicker('Open With:', newInputDiv)
+            break
     }
 
-    if (newRow) container.appendChild(newRow)
+    if (newInputDiv) container.appendChild(newInputDiv)
 }
 
+// for when conditions change
+function addNewInputToo(value) {
+    const existing = document.getElementById('new-input')
+    if (existing) existing.remove()
+
+    const newInputDiv = setupNewInputDiv()
+
+    if (value === 'application') {
+        addFilePicker('Open With:', newInputDiv)
+    } else if (value === 'ps2' || value === 'psp') {
+        addFilePicker('Emulator Path:', newInputDiv)
+    }
+
+    if (newInputDiv) container.appendChild(newInputDiv)
+}
+
+function setupNewInputDiv() {
+    const newInputDiv = document.createElement('div')
+    newInputDiv.classList.add('modal-input')
+    newInputDiv.id = 'new-input'
+    return newInputDiv
+}
+
+function addFilePicker(labelText, newInputDiv) {
+    const openWithPathDiv = document.createElement('div')
+    openWithPathDiv.id = "open-with-path-container"
+
+    const openWithPathTitle = document.createElement('span')
+    openWithPathTitle.innerHTML = labelText
+
+    const openWithPathBtn = document.createElement('button')
+    openWithPathBtn.classList.add('item-path-btn')
+    openWithPathBtn.type = 'button'
+    openWithPathBtn.id = 'open-with-path-btn'
+
+    const openWithPathLabel = document.createElement('label')
+    openWithPathLabel.id = 'open-with-path-label'
+    openWithPathLabel.textContent = '...'
+
+    setupFilePicker(openWithPathBtn, openWithPathLabel)
+
+    openWithPathDiv.appendChild(openWithPathTitle)
+    openWithPathDiv.appendChild(openWithPathBtn)
+    openWithPathDiv.appendChild(openWithPathLabel)
+
+    newInputDiv.appendChild(openWithPathDiv)
+}
+
+// INPUT STATE CHECKERS
+// conditions field state checker
 if (currConditions) {
     currConditions.addEventListener('change', () => {
-
-        const value = currConditions.value
-
-        if (value === 'application') {
-            addNewInput(value)
-        } else {
-            const existing = document.getElementById('new-input')
-            if (existing) existing.remove()
-        }
+        addNewInputToo(currConditions.value)
     })
 
 }
 
+// type field state checker
 if (currType) {
     currType.addEventListener('change', () => {
 
         const existing = document.getElementById('new-input')
         if (existing) existing.remove()
 
+        addNewInput(currType.value)
+
         document.getElementById('item-path-div').style.display = "block"
 
-        if (currType.value === 'executable') {
-            populateConditions(typeExe)
-        } else if (currType.value === 'custom-script') {
-            document.getElementById('item-path-div').style.display = "none"
-            addNewInput(currType.value)
-            populateConditions(scriptTypes)
-        } else if (currType.value === 'rom') {
-            populateConditions(romTypes)
-        } else {
-            populateConditions(typeOthers)
+        switch (currType.value) {
+            case 'executable':
+                populateConditions(typeExe)
+                break
+
+            case 'rom':
+                populateConditions(romTypes)
+                break
+            
+            case 'custom-script':
+                document.getElementById('item-path-div').style.display = "none"
+                addNewInput(currType.value)
+                populateConditions(scriptTypes)
+                break
+
+            case 'others':
+                populateConditions(typeOthers)
+                break
         }
     })
 

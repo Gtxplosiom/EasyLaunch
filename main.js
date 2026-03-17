@@ -1,16 +1,18 @@
-const { app, dialog, shell, BrowserWindow, ipcMain, Tray, Menu } = require('electron')
+const { app, dialog, BrowserWindow, ipcMain, Tray, Menu } = require('electron')
+const { exec } = require("child_process")
 const path = require("node:path")
 const sqlite3 = require('sqlite3').verbose();
 const dbPath = path.join(__dirname, 'local.sqlite')
 
 app.whenReady().then(() => {
+    let itemList, addWindow, editWindow
+
     let db = new sqlite3.Database(dbPath, (err) => {
         if(err) console.error(err.message)
         console.log('Connected to local database')
     })
 
-    let itemList
-
+    // db initializer
     db.serialize(() => {
         db.run(`
             CREATE TABLE IF NOT EXISTS items (
@@ -18,7 +20,7 @@ app.whenReady().then(() => {
                 item_name TEXT NULL,
                 type TEXT DEFAULT 'executable',
                 path TEXT NULL,
-                condition TEXT DEFAULT 'default',
+                condition TEXT DEFAULT 'normal',
                 open_with_path TEXT NULL,
                 launch_script TEXT NULL,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -31,7 +33,7 @@ app.whenReady().then(() => {
         loadItemList()
     })
 
-    // for tray
+    // tray item "loader"
     function loadItemList() {
         db.all("SELECT * FROM items", [], (err, rows) => {
 
@@ -44,7 +46,15 @@ app.whenReady().then(() => {
                 id: row.id.toString(),
                 label: row.item_name,
                 click: () => {
-                    launchItem(row.path)
+                    switch (row.type) {
+                        case 'executable':
+                            launchItem(row.type, row.condition, row.path)
+                            break
+                        case 'rom':
+                        case 'others':
+                            launchItem(row.type, row.condition, row.path, row.open_with_path)
+                            break
+                    }
                 }
             }))
 
@@ -52,8 +62,26 @@ app.whenReady().then(() => {
         })
     }
 
-    function launchItem(itemPath) {
-        shell.openPath(itemPath)
+    // TODO add custom-script, url
+    // item mapper, new learningszxczszxczs, very cool
+    // add error handlers
+    const itemHandler = {
+        executable: {
+            normal: (path) => exec(`powershell -Command "Start-Process '${path}'"`),
+            admin: (path) => exec(`powershell -Command "Start-Process '${path}' -Verb RunAs"`)
+        },
+        rom: {
+            ps2: (path, openWithPath) => exec(`"${openWithPath}" "${path}" -fullscreen`),
+            psp: (path, openWithPath) => exec(`"${openWithPath}" --fullscreen "${path}"`),
+        },
+        others: {
+            application: (path, openWithPath) => exec(`"${openWithPath}" "${path}"`)
+        }
+    }
+
+    // item launcher
+    function launchItem(type, condition, ...args) {
+        itemHandler[type]?.[condition]?.(...args); 
     }
 
     const window = new BrowserWindow({
@@ -73,11 +101,19 @@ app.whenReady().then(() => {
 
     window.setMenuBarVisibility(false)
 
-    let addWindow, editWindow
-
     const iconPath = path.join(__dirname, "assets/launch.ico")
     const tray = new Tray(iconPath)
+
+    // tray stuff
     tray.setToolTip("EasyLaunch")
+
+    tray.on("click", () => {
+        tray.popUpContextMenu(itemList)
+    })
+
+    tray.on("right-click", () => {
+        tray.popUpContextMenu(contextMenu)
+    })
 
     const contextMenu = Menu.buildFromTemplate([
         {
@@ -95,17 +131,10 @@ app.whenReady().then(() => {
             click: () => app.quit()
         }
     ])
-
-    tray.on("click", () => {
-        tray.popUpContextMenu(itemList)
-    })
-
-    tray.on("right-click", () => {
-        tray.popUpContextMenu(contextMenu)
-    })
     
     window.loadFile("index.html")
 
+    // IPC Stuff
     ipcMain.on("open-add-modal", () => {
         if (addWindow && addWindow.isVisible()) {
             addWindow.focus();

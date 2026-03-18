@@ -22,6 +22,7 @@ app.whenReady().then(() => {
                 path TEXT NULL,
                 condition TEXT DEFAULT 'normal',
                 open_with_path TEXT NULL,
+                url TEXT NULL,
                 launch_script TEXT NULL,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP
             )
@@ -54,6 +55,9 @@ app.whenReady().then(() => {
                         case 'others':
                             launchItem(row.type, row.condition, row.path, row.open_with_path)
                             break
+                        case 'url':
+                            launchItem(row.type, row.condition, row.url)
+                            break
                     }
                 }
             }))
@@ -73,6 +77,9 @@ app.whenReady().then(() => {
         rom: {
             ps2: (path, openWithPath) => exec(`"${openWithPath}" "${path}" -fullscreen`),
             psp: (path, openWithPath) => exec(`"${openWithPath}" --fullscreen "${path}"`),
+        },
+        url: {
+            normal: (urlText) => exec(`start "" "${urlText}"`)
         },
         others: {
             application: (path, openWithPath) => exec(`"${openWithPath}" "${path}"`)
@@ -163,8 +170,8 @@ app.whenReady().then(() => {
     ipcMain.on("add-item", (event, data) => {
 
         db.run(
-            "INSERT INTO items (item_name, path, type, condition, open_with_path, launch_script) VALUES (?, ?, ?, ?, ?, ?)",
-            [data.itemName, data.itemPath, data.itemType, data.condition, data.openWithPath, data.launchScript],
+            "INSERT INTO items (item_name, path, type, condition, open_with_path, url, launch_script) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            [data.itemName, data.itemPath, data.itemType, data.condition, data.openWithPath, data.url, data.launchScript],
             function(err) {
                 if (err) {
                     return console.error(err.message)

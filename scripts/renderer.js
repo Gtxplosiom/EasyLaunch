@@ -36,18 +36,21 @@ if (itemForm) {
         const itemType = document.getElementById("item-type").value
         const condition = document.getElementById("conditions").value
 
-
-        let openWithPath, launchScript = ''
+        let openWithPath, url, launchScript = ''
         
         if (document.getElementById("open-with-path-label")) {
             openWithPath = document.getElementById("open-with-path-label").textContent
+        }
+
+        if (document.getElementById("url-text")) {
+            url = document.getElementById("url-text").value
         }
 
         if (document.getElementById("launch-script")) {
             launchScript = document.getElementById("script-text").textContent
         }
 
-        window.electronAPI.send("add-item", {itemName, itemPath, itemType, condition, openWithPath, launchScript})
+        window.electronAPI.send("add-item", {itemName, itemPath, itemType, condition, openWithPath, url, launchScript})
         window.electronAPI.send("close-modals")
         window.electronAPI.send("refresh")
         loadItemList()
@@ -148,7 +151,19 @@ function addNewInput(value) {
             const textArea = document.createElement('textarea')
             textArea.id = 'launch-script'
 
-            newRow.appendChild(textArea)
+            newInputDiv.appendChild(textArea)
+            break
+        
+        case 'url':
+            const urlTitle = document.createElement('label')
+            urlTitle.innerHTML = 'URL:'
+
+            const textField = document.createElement('input')
+            textField.type = 'text'
+            textField.id = 'url-text'
+
+            newInputDiv.appendChild(urlTitle)
+            newInputDiv.appendChild(textField)
             break
 
         case 'others':
@@ -216,6 +231,10 @@ if (currConditions) {
 
 }
 
+function elementVisibilityHandler(element, visibility) {
+    document.getElementById(element).style.display = visibility
+}
+
 // type field state checker
 if (currType) {
     currType.addEventListener('change', () => {
@@ -225,7 +244,8 @@ if (currType) {
 
         addNewInput(currType.value)
 
-        document.getElementById('item-path-div').style.display = "block"
+        elementVisibilityHandler('item-path-div' ,'block')
+        elementVisibilityHandler('conditions-div' ,'block')
 
         switch (currType.value) {
             case 'executable':
@@ -237,9 +257,18 @@ if (currType) {
                 break
             
             case 'custom-script':
-                document.getElementById('item-path-div').style.display = "none"
+                elementVisibilityHandler('item-path-div' ,'none')
+
                 addNewInput(currType.value)
+
                 populateConditions(scriptTypes)
+                break
+
+            case 'url':
+                elementVisibilityHandler('item-path-div' ,'none')
+                elementVisibilityHandler('conditions-div' ,'none')
+
+                addNewInput(currType.value)
                 break
 
             case 'others':
@@ -250,3 +279,5 @@ if (currType) {
 
     populateConditions(typeExe)
 }
+
+// TODO: fix bug where when changing conditions it mess up with the newly(programatically) added inputs

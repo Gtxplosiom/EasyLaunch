@@ -8,6 +8,10 @@ body {
     height: 15px;
 }
 
+#url-text {
+    width: 300px;
+}
+
 #launch-script {
     width: 250px;
     height: 100px;

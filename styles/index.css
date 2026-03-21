@@ -29,5 +29,6 @@ body {
 }
 
 .item {
+    display: flex;
     background-color: aliceblue;
 }

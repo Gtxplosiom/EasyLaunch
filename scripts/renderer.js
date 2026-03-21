@@ -69,10 +69,25 @@ function loadItemList() {
             div.classList.add("item")
             div.textContent = row.item_name
 
+            const delete_btn = document.createElement("button")
+            delete_btn.classList.add("delete-btn")
+            delete_btn.innerHTML = 'del'
+
             div.addEventListener("click", () => {
                 console.log("Clicked item:", row.item_name)
-                ipcRenderer.send("launch-item", row.id)
+                window.electronAPI.send("launch-item", row.id)
             })
+
+            delete_btn.addEventListener("click", () => {
+                window.electronAPI.send("delete-item", row.id)
+
+                setTimeout(() => {
+                    window.electronAPI.send("refresh")
+                    loadItemList();
+                }, 100);
+            })
+
+            div.appendChild(delete_btn)
 
             container.appendChild(div)
         })

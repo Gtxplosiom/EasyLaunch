@@ -168,7 +168,6 @@ app.whenReady().then(() => {
     })
 
     ipcMain.on("add-item", (event, data) => {
-
         db.run(
             "INSERT INTO items (item_name, path, type, condition, open_with_path, url, launch_script) VALUES (?, ?, ?, ?, ?, ?, ?)",
             [data.itemName, data.itemPath, data.itemType, data.condition, data.openWithPath, data.url, data.launchScript],
@@ -181,6 +180,21 @@ app.whenReady().then(() => {
             }
         )
     })
+
+    ipcMain.on("delete-item", (event, id) => {
+        db.run(
+            "DELETE FROM items WHERE id = ?",
+            [id],
+            function (err) {
+                if (err) {
+                    console.error(err.message);
+                    return;
+                }
+
+                console.log("Deleted item with ID:", id);
+            }
+        );
+    });
 
     ipcMain.on("close-modals", () => {
         if (addWindow && addWindow.isVisible()) {

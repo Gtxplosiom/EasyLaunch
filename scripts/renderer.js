@@ -70,15 +70,18 @@ function loadItemList() {
             div.textContent = row.item_name
 
             const delete_btn = document.createElement("button")
-            delete_btn.classList.add("delete-btn")
+            delete_btn.id = "delete-btn"
             delete_btn.innerHTML = 'del'
 
+            // TODO: apply mapping here
             div.addEventListener("click", () => {
                 console.log("Clicked item:", row.item_name)
-                window.electronAPI.send("launch-item", row.id)
+                window.electronAPI.send("launch-item", row)
             })
 
-            delete_btn.addEventListener("click", () => {
+            delete_btn.addEventListener("click", (e) => {
+                e.stopPropagation();
+
                 window.electronAPI.send("delete-item", row.id)
 
                 setTimeout(() => {

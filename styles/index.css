@@ -30,5 +30,19 @@ body {
 
 .item {
     display: flex;
+    height: 50px;
+    background-color: aqua;
+}
+
+.item:hover {
     background-color: aliceblue;
+}
+
+.item:active {
+    background-color: aqua;
+}
+
+#delete-btn {
+    width: 50px;
+    height: 25px;
 }

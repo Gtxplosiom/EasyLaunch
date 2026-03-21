@@ -47,18 +47,7 @@ app.whenReady().then(() => {
                 id: row.id.toString(),
                 label: row.item_name,
                 click: () => {
-                    switch (row.type) {
-                        case 'executable':
-                            launchItem(row.type, row.condition, row.path)
-                            break
-                        case 'rom':
-                        case 'others':
-                            launchItem(row.type, row.condition, row.path, row.open_with_path)
-                            break
-                        case 'url':
-                            launchItem(row.type, row.condition, row.url)
-                            break
-                    }
+                    launchItem(row)
                 }
             }))
 
@@ -66,29 +55,30 @@ app.whenReady().then(() => {
         })
     }
 
-    // TODO add custom-script, url
+    // TODO: add custom-script
+    // TODO: make this more flexible
     // item mapper, new learningszxczszxczs, very cool
     // add error handlers
     const itemHandler = {
         executable: {
-            normal: (path) => exec(`powershell -Command "Start-Process '${path}'"`),
-            admin: (path) => exec(`powershell -Command "Start-Process '${path}' -Verb RunAs"`)
+            normal: (item) => exec(`powershell -Command "Start-Process '${item.path}'"`),
+            admin: (item) => exec(`powershell -Command "Start-Process '${item.path}' -Verb RunAs"`)
         },
         rom: {
-            ps2: (path, openWithPath) => exec(`"${openWithPath}" "${path}" -fullscreen`),
-            psp: (path, openWithPath) => exec(`"${openWithPath}" --fullscreen "${path}"`),
+            ps2: (item) => exec(`"${item.open_with_path}" "${item.path}" -fullscreen`),
+            psp: (item) => exec(`"${item.open_with_path}" --fullscreen "${item.path}"`),
         },
         url: {
-            normal: (urlText) => exec(`start "" "${urlText}"`)
+            normal: (item) => exec(`start "" "${item.url}"`)
         },
         others: {
-            application: (path, openWithPath) => exec(`"${openWithPath}" "${path}"`)
+            application: (item) => exec(`"${item.open_with_path}" "${item.path}"`)
         }
     }
 
     // item launcher
-    function launchItem(type, condition, ...args) {
-        itemHandler[type]?.[condition]?.(...args); 
+    function launchItem(item) {
+        itemHandler[item.type]?.[item.condition]?.(item) 
     }
 
     const window = new BrowserWindow({
@@ -179,6 +169,11 @@ app.whenReady().then(() => {
                 console.log("inserted row")
             }
         )
+    })
+
+    // TODO: redo this with mapping
+    ipcMain.on("launch-item", (event, row) => {
+        launchItem(row)
     })
 
     ipcMain.on("delete-item", (event, id) => {
